@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kotak Gaya Belajarmu - Media Layanan Interaktif BK</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f0fdf4;
+            color: #1e293b;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Pola dan nuansa warna hanya diterapkan pada arena permainan. */
+        .game-arena {
+            background-color: #F8FAFC;
+            background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+            background-size: 24px 24px;
+            overflow-x: hidden;
+        }
+
+        .font-fredoka {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Canvas for Floating Word Bank Boundary */
+        #wordBankContainer {
+            position: relative;
+            min-height: 220px;
+            overflow: hidden;
+            border: 3px dashed #A5B4FC;
+            background: linear-gradient(135deg, #eef2ff 0%, #f0fdf4 100%);
+        }
+
+        .floating-word {
+            position: absolute;
+            cursor: grab;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+            touch-action: none;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            will-change: transform, left, top;
+        }
+
+        .floating-word:active {
+            cursor: grabbing;
+            transform: scale(1.08);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
+        .drop-zone {
+            min-height: 180px;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #EEF2FF !important;
+            border-color: #6366F1 !important;
+            transform: scale(1.01);
+        }
+
+        .word-in-zone {
+            position: static !important;
+            display: inline-flex !important;
+            margin: 0;
+            cursor: pointer;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .game-arena .drop-zone {
+            gap: 0.5rem;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Timer permainan */
+        #gameTimerBox { min-width: 112px; transition: all .2s ease; }
+        #gameTimerBox.timer-warning { background:#fef3c7; border-color:#f59e0b; color:#92400e; }
+        #gameTimerBox.timer-danger { background:#fee2e2; border-color:#ef4444; color:#991b1b; animation: timerPulse .8s ease-in-out infinite; }
+        @keyframes timerPulse { 50% { transform: scale(1.04); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50">
+
+    <!-- PAGE 1: COVER / LANDING PAGE -->
+    <div id="coverPage" class="min-h-screen flex flex-col justify-center items-center p-4 text-center">
+        <div class="max-w-3xl w-full bg-white/90 backdrop-blur-md p-8 md:p-12 rounded-3xl shadow-xl border border-emerald-100 flex flex-col items-center">
+            
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-4xl mb-6 shadow-inner animate-bounce">
+                <i class="fa-solid fa-boxes-packing"></i>
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-fredoka font-bold text-emerald-800 mb-4 tracking-wide">
+                Kotak Gaya Belajarmu
+            </h1>
+
+            <div class="w-24 h-1.5 bg-emerald-400 rounded-full mb-6"></div>
+
+            <p class="text-slate-600 text-base md:text-lg italic leading-relaxed mb-8 max-w-2xl bg-emerald-50/70 p-5 rounded-2xl border border-emerald-100 shadow-sm">
+                "Temukan wadah belajarmu, wujudkan kebiasaan belajarmu. Mengenali diri melalui gaya belajar Visual, Auditori, dan Kinestetik untuk belajar lebih efektif dan menyenangkan."
+            </p>
+
+            <div class="flex items-center gap-3 text-slate-500 font-medium text-sm mb-10 bg-slate-100 px-4 py-2 rounded-full">
+                <i class="fa-solid fa-user-graduate text-emerald-600"></i>
+                <span>Oleh: <strong>Titan Panjalu, S.Pd.</strong> (Guru Bimbingan dan Konseling)</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md">
+                <button onclick="showPage('guidePage')" class="w-full sm:w-1/2 py-3.5 px-6 rounded-2xl border-2 border-emerald-500 text-emerald-700 font-bold hover:bg-emerald-50 transition active:scale-95 flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-book-open"></i> Petunjuk Bermain
+                </button>
+                <button onclick="startGame()" class="w-full sm:w-1/2 py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold transition active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-emerald-200">
+                    <i class="fa-solid fa-play"></i> Mulai Bermain
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: PANDUAN BERMAIN -->
+    <div id="guidePage" class="hidden min-h-screen flex flex-col justify-center items-center p-4">
+        <div class="max-w-2xl w-full bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100">
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-fredoka font-bold text-slate-800">Petunjuk & Cara Bermain</h2>
+                    <p class="text-xs text-slate-500">Panduan mudah menyelesaikan permainan</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-amber-50/60 border border-amber-100">
+                    <span class="w-8 h-8 rounded-full bg-amber-400 text-white font-bold flex items-center justify-center shrink-0">1</span>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Amati Kata Melayang</h4>
+                        <p class="text-xs text-slate-600">Perhatikan kartu-kartu kata yang bergerak di dalam Word Bank bagian atas.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-sky-50/60 border border-sky-100">
+                    <span class="w-8 h-8 rounded-full bg-sky-400 text-white font-bold flex items-center justify-center shrink-0">2</span>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Seret & Lepaskan (Drag & Drop)</h4>
+                        <p class="text-xs text-slate-600">Tarik kartu kata ke kotak kategori yang tepat: <strong>Visual</strong>, <strong>Auditori</strong>, atau <strong>Kinestetik</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+                    <span class="w-8 h-8 rounded-full bg-emerald-400 text-white font-bold flex items-center justify-center shrink-0">3</span>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Cek Jawaban & Skor</h4>
+                        <p class="text-xs text-slate-600">Tekan tombol <strong>Periksa Jawaban</strong> di bagian bawah untuk melihat hasil evaluasi dan perolehan skor.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4 p-4 rounded-2xl bg-purple-50/60 border border-purple-100">
+                    <span class="w-8 h-8 rounded-full bg-purple-400 text-white font-bold flex items-center justify-center shrink-0">4</span>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">Selesaikan 3 Level</h4>
+                        <p class="text-xs text-slate-600">Lanjutkan ke level berikutnya untuk mengenali ciri-ciri, alat bantu, dan strategi cara belajar efektif.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="showPage('coverPage')" class="w-full sm:w-1/2 py-3 px-5 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition active:scale-95">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali ke Cover
+                </button>
+                <button onclick="startGame()" class="w-full sm:w-1/2 py-3 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold transition active:scale-95 shadow-md shadow-emerald-200">
+                    Mulai Bermain <i class="fa-solid fa-play"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: ARENA PERMAINAN (DESAIN DIADAPTASI DARI CLASSIFY THE LEARNING METHOD) -->
+    <div id="gamePage" class="hidden min-h-screen flex flex-col game-arena">
+        <header class="bg-white border-b-4 border-indigo-200 px-4 py-3 shadow-sm sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <button onclick="showPage('coverPage')" aria-label="Kembali ke halaman utama" class="bg-slate-100 hover:bg-slate-200 text-slate-700 w-10 h-10 rounded-2xl border-2 border-slate-200 flex items-center justify-center transition">
+                        <i class="fa-solid fa-house text-lg"></i>
+                    </button>
+                    <div class="bg-indigo-500 text-white p-2.5 rounded-2xl shadow-md rotate-[-3deg] hidden sm:flex items-center justify-center">
+                        <i class="fa-solid fa-shapes text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-fredoka text-xl sm:text-2xl font-bold text-indigo-900 tracking-wide">Kotak Gaya Belajarmu</h2>
+                        <p id="levelSubtitle" class="text-xs text-slate-500 font-semibold">Level 1: Ciri-Ciri (Mengenali Diri)</p>
+                    </div>
+                    <div id="gameTimerBox" class="bg-emerald-50 border-2 border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl shadow-sm text-center min-w-[92px]" title="Waktu mengerjakan level ini">
+                        <div class="text-[9px] font-bold uppercase tracking-wide"><i class="fa-regular fa-clock mr-1"></i>Waktu</div>
+                        <div id="gameTimer" class="font-fredoka font-bold text-lg leading-tight">04:00</div>
+                        <div class="mt-1 h-1 bg-white/80 rounded-full overflow-hidden">
+                            <div id="timerProgressBar" class="h-full rounded-full bg-emerald-500" style="width:100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-3 ml-auto">
+                    <div class="bg-amber-100 border-2 border-amber-300 text-amber-800 px-3 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-star text-amber-500 text-base animate-bounce"></i>
+                        <span>Skor: <span id="score-display" class="font-fredoka text-base text-amber-900">0</span></span>
+                    </div>
+                    <button onclick="openTeacherModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl font-semibold text-xs sm:text-sm border-2 border-slate-300 flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-pen-to-square text-indigo-600"></i><span>Mode Guru</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto mt-3 bg-white p-2 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto w-full sm:w-auto" aria-label="Pilih level permainan">
+                    <button id="lvlBtn1" onclick="switchLevel(1)" class="px-3 py-2 rounded-xl font-fredoka text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-indigo-600 text-white shadow-md"><i class="fa-solid fa-user"></i> 1. Ciri-Ciri</button>
+                    <button id="lvlBtn2" onclick="switchLevel(2)" class="px-3 py-2 rounded-xl font-fredoka text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200"><i class="fa-solid fa-toolbox"></i> 2. Alat Bantu</button>
+                    <button id="lvlBtn3" onclick="switchLevel(3)" class="px-3 py-2 rounded-xl font-fredoka text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200"><i class="fa-solid fa-bolt"></i> 3. Cara Belajar</button>
+                </div>
+                <div class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 hidden md:block">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Seret kartu melayang ke kotak gaya belajar yang sesuai!
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto w-full p-4 flex-grow flex flex-col gap-4">
+            <section class="flex flex-col gap-2">
+                <div class="flex items-center justify-between px-1 gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3 h-3 rounded-full bg-indigo-500 animate-ping"></span>
+                        <h2 class="font-fredoka font-bold text-slate-700 text-base sm:text-lg"><i class="fa-solid fa-cloud text-indigo-400 mr-1"></i> Area Bank Kata (Seret dari Sini)</h2>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm" id="word-count-badge">15 Kata Tersisa</span>
+                </div>
+                <div id="wordBankContainer" class="w-full h-52 sm:h-60 rounded-3xl p-4 shadow-inner relative border-4 border-indigo-100">
+                    <!-- Kartu kata bergerak dibuat oleh JavaScript -->
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                <div class="bg-blue-50/80 border-2 border-blue-200 rounded-3xl p-3 shadow-sm flex flex-col">
+                    <div class="flex items-center gap-2 mb-2 pb-2 border-b border-blue-200 text-blue-900">
+                        <div class="bg-blue-500 text-white p-2.5 rounded-xl text-base shadow-sm"><i class="fa-solid fa-eye"></i></div>
+                        <div>
+                            <h3 class="font-fredoka font-bold text-base">Gaya Belajar Visual</h3>
+                            <p class="text-[11px] text-blue-600 font-medium">Belajar lewat penglihatan & gambar</p>
+                        </div>
+                    </div>
+                    <div id="zone-visual" data-category="visual" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="drop-zone flex-grow bg-white/80 rounded-2xl border-2 border-dashed border-blue-300 p-2 flex flex-wrap content-start gap-2">
+                        <!-- Kartu yang dipilih untuk gaya visual -->
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50/80 border-2 border-emerald-200 rounded-3xl p-3 shadow-sm flex flex-col">
+                    <div class="flex items-center gap-2 mb-2 pb-2 border-b border-emerald-200 text-emerald-900">
+                        <div class="bg-emerald-500 text-white p-2.5 rounded-xl text-base shadow-sm"><i class="fa-solid fa-ear-listen"></i></div>
+                        <div>
+                            <h3 class="font-fredoka font-bold text-base">Gaya Belajar Auditori</h3>
+                            <p class="text-[11px] text-emerald-600 font-medium">Belajar lewat pendengaran & diskusi</p>
+                        </div>
+                    </div>
+                    <div id="zone-auditori" data-category="auditori" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="drop-zone flex-grow bg-white/80 rounded-2xl border-2 border-dashed border-emerald-300 p-2 flex flex-wrap content-start gap-2">
+                        <!-- Kartu yang dipilih untuk gaya auditori -->
+                    </div>
+                </div>
+
+                <div class="bg-amber-50/80 border-2 border-amber-200 rounded-3xl p-3 shadow-sm flex flex-col">
+                    <div class="flex items-center gap-2 mb-2 pb-2 border-b border-amber-200 text-amber-900">
+                        <div class="bg-amber-500 text-white p-2.5 rounded-xl text-base shadow-sm"><i class="fa-solid fa-child-reaching"></i></div>
+                        <div>
+                            <h3 class="font-fredoka font-bold text-base">Gaya Belajar Kinestetik</h3>
+                            <p class="text-[11px] text-amber-700 font-medium">Belajar lewat gerakan & praktik</p>
+                        </div>
+                    </div>
+                    <div id="zone-kinestetik" data-category="kinestetik" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="drop-zone flex-grow bg-white/80 rounded-2xl border-2 border-dashed border-amber-300 p-2 flex flex-wrap content-start gap-2">
+                        <!-- Kartu yang dipilih untuk gaya kinestetik -->
+                    </div>
+                </div>
+            </section>
+
+            <div class="bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-md flex flex-wrap items-center justify-between gap-3 my-2">
+                <button onclick="resetCurrentLevel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-sm border-2 border-slate-300 flex items-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-rotate-left text-slate-500"></i><span>Reset Ulang</span>
+                </button>
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button onclick="checkAnswers()" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-fredoka text-base shadow-md hover:shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-check"></i><span>Periksa Jawaban</span>
+                    </button>
+                    <button id="nextLevelBtn" onclick="nextLevel()" class="hidden flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-fredoka text-base shadow-md hover:shadow-lg transition active:scale-95 items-center justify-center gap-2">
+                        <span>Soal Berikutnya</span><i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-slate-100 border-t border-slate-200 text-center py-3 px-4 text-xs text-slate-500 font-medium">
+            Media Layanan Bimbingan Klasikal BK &copy; 2026 — Kotak Gaya Belajarmu
+        </footer>
+    </div>
+
+    <!-- MODAL 1: RESULT EVALUATION MODAL -->
+    <div id="resultModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center border border-slate-100 animate-popIn">
+            <div id="resultIcon" class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <h3 id="resultTitle" class="text-2xl font-fredoka font-bold text-slate-800 mb-1">Hasil Evaluasi</h3>
+            <p id="resultSubtitle" class="text-xs text-slate-500 mb-4">Level 1 Selesai</p>
+            
+            <div class="bg-slate-50 p-4 rounded-2xl mb-6">
+                <div class="text-4xl font-fredoka font-bold text-emerald-600 mb-1" id="scoreText">0/0</div>
+                <div class="text-xs text-slate-500 font-medium" id="feedbackText">Jawaban tepat!</div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeResultModal()" class="w-1/2 py-3 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition text-xs">Tutup</button>
+                <button id="modalNextBtn" onclick="closeResultModal(); nextLevel();" class="hidden w-1/2 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition text-xs shadow-md">Lanjut Level</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: TEACHER EDITOR MODE MODAL -->
+    <div id="teacherModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+            
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-500 text-lg"></i>
+                    <h3 class="font-fredoka font-bold text-lg text-slate-800">Mode Guru (Editor Data)</h3>
+                </div>
+                <button onclick="closeTeacherModal()" class="text-slate-400 hover:text-slate-600 font-bold p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 overflow-y-auto flex-1 pr-1">
+                <!-- Select Level -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Level yang Diedit:</label>
+                    <select id="editorLevelSelect" onchange="renderTeacherWordsList()" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-amber-400 outline-none">
+                        <option value="1">Level 1: Ciri-Ciri Diri</option>
+                        <option value="2">Level 2: Alat Bantu Belajar</option>
+                        <option value="3">Level 3: Cara Belajar Efektif</option>
+                    </select>
+                </div>
+
+                <!-- Add New Word Form -->
+                <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-200">
+                    <h4 class="font-bold text-xs text-amber-800 mb-2">Tambah Kata Baru</h4>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input id="newWordText" type="text" placeholder="Teks kata..." class="flex-1 p-2 rounded-xl border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-amber-400">
+                        <select id="newWordCategory" class="p-2 rounded-xl border border-slate-200 text-xs outline-none font-semibold">
+                            <option value="visual">Visual</option>
+                            <option value="auditori">Auditori</option>
+                            <option value="kinestetik">Kinestetik</option>
+                        </select>
+                        <button onclick="addWordByTeacher()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition shrink-0">
+                            Tambah
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Existing Words List -->
+                <div>
+                    <h4 class="font-bold text-xs text-slate-700 mb-2">Daftar Kata Level Ini:</h4>
+                    <div id="teacherWordsList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <!-- Dynamic items -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-100 pt-3 mt-4 flex justify-between items-center">
+                <button onclick="resetDefaultData()" class="text-xs text-rose-500 font-bold hover:underline">
+                    Reset Ke Data Default
+                </button>
+                <button onclick="closeTeacherModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl">
+                    Selesai & Simpan
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // DATA STRUCTURE - 3 LEVELS
+        const defaultLevelData = {
+            1: [
+                { id: 'l1_v1', text: 'Suka Membaca', category: 'visual' },
+                { id: 'l1_v2', text: 'Rapi & Teratur', category: 'visual' },
+                { id: 'l1_v3', text: 'Mengingat Wajah', category: 'visual' },
+                { id: 'l1_v4', text: 'Suka Warna', category: 'visual' },
+                { id: 'l1_v5', text: 'Perhatian Detail', category: 'visual' },
+
+                { id: 'l1_a1', text: 'Suka Bercerita', category: 'auditori' },
+                { id: 'l1_a2', text: 'Mengingat Nama', category: 'auditori' },
+                { id: 'l1_a3', text: 'Bergumam saat Belajar', category: 'auditori' },
+                { id: 'l1_a4', text: 'Mudah Bising', category: 'auditori' },
+                { id: 'l1_a5', text: 'Senang Berdiskusi', category: 'auditori' },
+
+                { id: 'l1_k1', text: 'Tidak Bisa Diam', category: 'kinestetik' },
+                { id: 'l1_k2', text: 'Suka Menyentuh', category: 'kinestetik' },
+                { id: 'l1_k3', text: 'Isyarat Tubuh', category: 'kinestetik' },
+                { id: 'l1_k4', text: 'Aktif Bergerak', category: 'kinestetik' },
+                { id: 'l1_k5', text: 'Cepat Bosan Duduk', category: 'kinestetik' }
+            ],
+            2: [
+                { id: 'l2_v1', text: 'Stabilo Berwarna', category: 'visual' },
+                { id: 'l2_v2', text: 'Mind Map (Peta Konsep)', category: 'visual' },
+                { id: 'l2_v3', text: 'Flashcard Gambar', category: 'visual' },
+                { id: 'l2_v4', text: 'Video Animasi', category: 'visual' },
+                { id: 'l2_v5', text: 'Grafik & Tabel', category: 'visual' },
+
+                { id: 'l2_a1', text: 'Rekaman Suara', category: 'auditori' },
+                { id: 'l2_a2', text: 'Podcast Pembelajaran', category: 'auditori' },
+                { id: 'l2_a3', text: 'Lagu & Musik', category: 'auditori' },
+                { id: 'l2_a4', text: 'Buku Audio (Audiobook)', category: 'auditori' },
+                { id: 'l2_a5', text: 'Teman Diskusi', category: 'auditori' },
+
+                { id: 'l2_k1', text: 'Alat Peraga', category: 'kinestetik' },
+                { id: 'l2_k2', text: 'Mainan Tangan (Fidget)', category: 'kinestetik' },
+                { id: 'l2_k3', text: 'Ruang Luar Kelas', category: 'kinestetik' },
+                { id: 'l2_k4', text: 'Barang Praktik', category: 'kinestetik' },
+                { id: 'l2_k5', text: 'Catatan Kecil (Sticky Notes)', category: 'kinestetik' }
+            ],
+            3: [
+                { id: 'l3_v1', text: 'Menggambar Sketsa', category: 'visual' },
+                { id: 'l3_v2', text: 'Menonton Catatan', category: 'visual' },
+                { id: 'l3_v3', text: 'Membuat Singkatan Warna', category: 'visual' },
+                { id: 'l3_v4', text: 'Menulis Rapi', category: 'visual' },
+                { id: 'l3_v5', text: 'Menandai Teks', category: 'visual' },
+
+                { id: 'l3_a1', text: 'Membaca Keras-keras', category: 'auditori' },
+                { id: 'l3_a2', text: 'Tanya Jawab', category: 'auditori' },
+                { id: 'l3_a3', text: 'Menjelaskan Ulang', category: 'auditori' },
+                { id: 'l3_a4', text: 'Mendengarkan Guru', category: 'auditori' },
+                { id: 'l3_a5', text: 'Berdebat Topik', category: 'auditori' },
+
+                { id: 'l3_k1', text: 'Belajar Sambil Jalan', category: 'kinestetik' },
+                { id: 'l3_k2', text: 'Bermain Peran (Roleplay)', category: 'kinestetik' },
+                { id: 'l3_k3', text: 'Langsung Praktik', category: 'kinestetik' },
+                { id: 'l3_k4', text: 'Sering Jeda / Istirahat', category: 'kinestetik' },
+                { id: 'l3_k5', text: 'Belajar Sambil Berdiri', category: 'kinestetik' }
+            ]
+        };
+
+        // State variables
+        let gameData = JSON.parse(localStorage.getItem('kotakGayaBelajarData')) || JSON.parse(JSON.stringify(defaultLevelData));
+        let currentLevel = 1;
+        let floatingWords = [];
+        let animationFrameId = null;
+        let draggedWordObj = null;
+        let levelBestScores = { 1: 0, 2: 0, 3: 0 };
+
+        // Batas waktu per level: 4, 5, dan 6 menit.
+        let timerInterval = null;
+        let remainingSeconds = 0;
+        let timerExpired = false;
+        const levelTimeLimits = { 1: 4 * 60, 2: 5 * 60, 3: 6 * 60 };
+
+        const levelTitles = {
+            1: "Level 1: Ciri-Ciri (Mengenali Diri)",
+            2: "Level 2: Alat Bantu Belajar",
+            3: "Level 3: Cara Belajar Efektif"
+        };
+
+        // DOM Navigation
+        function showPage(pageId) {
+            document.getElementById('coverPage').classList.add('hidden');
+            document.getElementById('guidePage').classList.add('hidden');
+            document.getElementById('gamePage').classList.add('hidden');
+
+            document.getElementById(pageId).classList.remove('hidden');
+
+            if (pageId === 'gamePage') {
+                initLevel(currentLevel);
+            } else {
+                cancelAnimationFrame(animationFrameId);
+                stopGameTimer();
+            }
+        }
+
+        function startGame() {
+            showPage('gamePage');
+        }
+
+        function switchLevel(lvl) {
+            currentLevel = lvl;
+            // Update tabs
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById(`lvlBtn${i}`);
+                if (i === lvl) {
+                    btn.className = "px-3 py-2 rounded-xl font-fredoka text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-indigo-600 text-white shadow-md";
+                } else {
+                    btn.className = "px-3 py-2 rounded-xl font-fredoka text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-slate-100 text-slate-600 hover:bg-slate-200";
+                }
+            }
+            document.getElementById('levelSubtitle').innerText = levelTitles[lvl];
+            initLevel(lvl);
+            updateScoreDisplay();
+        }
+
+        // ===== TIMER PER LEVEL =====
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const sec = Math.max(0, seconds % 60).toString().padStart(2, '0');
+            return `${m}:${sec}`;
+        }
+
+        function updateTimerUI() {
+            const box = document.getElementById('gameTimerBox');
+            const label = document.getElementById('gameTimer');
+            const bar = document.getElementById('timerProgressBar');
+            if (!box || !label) return;
+            label.textContent = formatTime(remainingSeconds);
+            box.classList.remove('timer-warning', 'timer-danger');
+            const total = levelTimeLimits[currentLevel] || 240;
+            const ratio = Math.max(0, Math.min(1, remainingSeconds / total));
+            if (bar) bar.style.width = `${ratio * 100}%`;
+            if (remainingSeconds <= 30) box.classList.add('timer-danger');
+            else if (remainingSeconds <= 60) box.classList.add('timer-warning');
+        }
+
+        function stopGameTimer() {
+            if (timerInterval !== null) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function startGameTimer(lvl) {
+            stopGameTimer();
+            currentLevel = lvl;
+            remainingSeconds = levelTimeLimits[lvl] || 240;
+            timerExpired = false;
+            updateTimerUI();
+
+            // Gunakan hitungan berbasis waktu aktual agar tidak bergantung pada
+            // ketepatan interval browser. Timer benar-benar berkurang tiap detik.
+            let endTime = Date.now() + remainingSeconds * 1000;
+            timerInterval = setInterval(() => {
+                const secondsLeft = Math.ceil((endTime - Date.now()) / 1000);
+                remainingSeconds = Math.max(0, secondsLeft);
+                updateTimerUI();
+
+                if (remainingSeconds <= 0) {
+                    stopGameTimer();
+                    timerExpired = true;
+                    checkAnswers(true);
+                }
+            }, 250);
+        }
+
+        // Initialize Level & Physics
+        function initLevel(lvl) {
+            cancelAnimationFrame(animationFrameId);
+
+            // Clear drop zones
+            document.getElementById('zone-visual').innerHTML = '';
+            document.getElementById('zone-auditori').innerHTML = '';
+            document.getElementById('zone-kinestetik').innerHTML = '';
+
+            const container = document.getElementById('wordBankContainer');
+            container.innerHTML = '';
+
+            const words = gameData[lvl] || [];
+            floatingWords = [];
+            updateScoreDisplay();
+
+            const cWidth = container.clientWidth - 130;
+            const cHeight = container.clientHeight - 40;
+
+            words.forEach((item, index) => {
+                const el = document.createElement('div');
+                el.id = item.id;
+                el.innerText = item.text;
+                el.className = "floating-word bg-white text-indigo-900 border-indigo-200 border-2 font-semibold text-xs sm:text-sm px-3 py-2 rounded-2xl cursor-grab flex items-center gap-1.5 shadow-sm hover:border-indigo-400 select-none";
+
+                // Ikon kecil sebagai penanda kartu dapat dipindahkan.
+                const handle = document.createElement('i');
+                handle.className = "fa-solid fa-grip-vertical text-slate-300 text-xs";
+                el.prepend(handle);
+
+                // Initial Random Positions
+                const x = Math.max(10, Math.random() * cWidth);
+                const y = Math.max(10, Math.random() * cHeight);
+                const vx = (Math.random() - 0.5) * 1.2;
+                const vy = (Math.random() - 0.5) * 1.2;
+
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
+
+                // Mouse dan layar sentuh memakai pola seret yang sama.
+                setupTouchEvents(el, item);
+
+                container.appendChild(el);
+
+                floatingWords.push({
+                    id: item.id,
+                    data: item,
+                    el: el,
+                    x: x,
+                    y: y,
+                    vx: vx,
+                    vy: vy,
+                    isPlaced: false,
+                    isDragging: false
+                });
+            });
+
+            updateRemainingWordBadge();
+            document.getElementById('nextLevelBtn').classList.add('hidden');
+            document.getElementById('nextLevelBtn').classList.remove('flex');
+
+            // Start Animation Loop
+            animateFloatingWords();
+            startGameTimer(lvl);
+        }
+
+        // Bouncing Animation Physics Loop
+        function animateFloatingWords() {
+            const container = document.getElementById('wordBankContainer');
+            if (!container) return;
+
+            const cWidth = container.clientWidth;
+            const cHeight = container.clientHeight;
+
+            floatingWords.forEach(w => {
+                if (w.isPlaced || w.isDragging) return;
+
+                const rect = w.el.getBoundingClientRect();
+                const wWidth = rect.width || 120;
+                const wHeight = rect.height || 30;
+
+                w.x += w.vx;
+                w.y += w.vy;
+
+                // Bounce X Boundary
+                if (w.x <= 0) {
+                    w.x = 0;
+                    w.vx *= -1;
+                } else if (w.x + wWidth >= cWidth) {
+                    w.x = cWidth - wWidth;
+                    w.vx *= -1;
+                }
+
+                // Bounce Y Boundary
+                if (w.y <= 0) {
+                    w.y = 0;
+                    w.vy *= -1;
+                } else if (w.y + wHeight >= cHeight) {
+                    w.y = cHeight - wHeight;
+                    w.vy *= -1;
+                }
+
+                w.el.style.left = `${w.x}px`;
+                w.el.style.top = `${w.y}px`;
+            });
+
+            animationFrameId = requestAnimationFrame(animateFloatingWords);
+        }
+
+        // Drag & Drop Handlers
+        function handleDragStart(e, item) {
+            draggedWordObj = item;
+            e.dataTransfer.setData('text/plain', JSON.stringify(item));
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            zone.classList.remove('drag-over');
+
+            const category = zone.getAttribute('data-category');
+            if (draggedWordObj) {
+                placeWordInZone(draggedWordObj, category, zone);
+                draggedWordObj = null;
+            }
+        }
+
+        function placeWordInZone(item, category, zoneElement) {
+            const wordObj = floatingWords.find(w => w.id === item.id);
+            if (!wordObj || wordObj.isPlaced) return;
+
+            wordObj.isPlaced = true;
+            
+            // Remove floating element style
+            const el = wordObj.el;
+            el.className = "word-in-zone bg-white border-2 border-slate-300 text-slate-800 text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition";
+            el.style.position = "static";
+            el.style.left = "";
+            el.style.top = "";
+            el.style.zIndex = "";
+            el.style.transform = "";
+
+            // Klik kartu yang sudah diletakkan untuk mengembalikannya ke bank kata.
+            el.onclick = () => returnWordToBank(wordObj);
+            zoneElement.appendChild(el);
+            updateRemainingWordBadge();
+        }
+
+        function returnWordToBank(wordObj) {
+            wordObj.isPlaced = false;
+            wordObj.isDragging = false;
+            const container = document.getElementById('wordBankContainer');
+            const el = wordObj.el;
+            el.onclick = null;
+            el.className = "floating-word bg-white text-indigo-900 border-indigo-200 border-2 font-semibold text-xs sm:text-sm px-3 py-2 rounded-2xl cursor-grab flex items-center gap-1.5 shadow-sm hover:border-indigo-400 select-none";
+            el.style.position = "absolute";
+            el.style.zIndex = "10";
+            el.style.transform = "";
+            wordObj.x = Math.max(5, Math.random() * Math.max(5, container.clientWidth - (el.offsetWidth || 120) - 10));
+            wordObj.y = Math.max(5, Math.random() * Math.max(5, container.clientHeight - (el.offsetHeight || 36) - 10));
+            el.style.left = `${wordObj.x}px`;
+            el.style.top = `${wordObj.y}px`;
+            container.appendChild(el);
+            updateRemainingWordBadge();
+        }
+
+        // Seret kartu dengan mouse maupun layar sentuh, mengikuti interaksi file referensi.
+        function setupTouchEvents(el, item) {
+            el.draggable = false;
+            let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+            let active = false;
+
+            const onStart = (e) => {
+                const wordObj = floatingWords.find(w => w.id === item.id);
+                if (!wordObj || wordObj.isPlaced) return;
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                if (e.cancelable) e.preventDefault();
+
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.clientX;
+                startY = point.clientY;
+                const rect = el.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                active = true;
+                draggedWordObj = item;
+                wordObj.isDragging = true;
+
+                el.style.position = 'fixed';
+                el.style.left = `${initialLeft}px`;
+                el.style.top = `${initialTop}px`;
+                el.style.zIndex = '9999';
+                document.body.appendChild(el);
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchmove', onMove, { passive: false });
+                document.addEventListener('touchend', onEnd);
+                document.addEventListener('touchcancel', onEnd);
+            };
+
+            const onMove = (e) => {
+                if (!active) return;
+                if (e.cancelable) e.preventDefault();
+                const point = e.touches ? e.touches[0] : e;
+                el.style.left = `${initialLeft + point.clientX - startX}px`;
+                el.style.top = `${initialTop + point.clientY - startY}px`;
+            };
+
+            const onEnd = (e) => {
+                if (!active) return;
+                active = false;
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onEnd);
+                document.removeEventListener('touchcancel', onEnd);
+
+                const point = e.changedTouches ? e.changedTouches[0] : e;
+                // Kartu yang sedang diseret berada di lapisan paling atas, jadi deteksi zona berdasarkan koordinat.
+                let dropZone = null;
+                document.querySelectorAll('.drop-zone').forEach(zone => {
+                    const rect = zone.getBoundingClientRect();
+                    if (point.clientX >= rect.left && point.clientX <= rect.right && point.clientY >= rect.top && point.clientY <= rect.bottom) {
+                        dropZone = zone;
+                    }
+                });
+                if (!dropZone) {
+                    const target = document.elementFromPoint(point.clientX, point.clientY);
+                    dropZone = target ? target.closest('.drop-zone') : null;
+                }
+                const wordObj = floatingWords.find(w => w.id === item.id);
+
+                if (wordObj) wordObj.isDragging = false;
+                if (dropZone && wordObj) {
+                    placeWordInZone(item, dropZone.getAttribute('data-category'), dropZone);
+                } else if (wordObj) {
+                    const bank = document.getElementById('wordBankContainer');
+                    const bankRect = bank.getBoundingClientRect();
+                    if (point.clientX >= bankRect.left && point.clientX <= bankRect.right && point.clientY >= bankRect.top && point.clientY <= bankRect.bottom) {
+                        el.style.position = 'absolute';
+                        el.style.zIndex = '10';
+                        el.style.left = `${Math.max(5, point.clientX - bankRect.left - el.offsetWidth / 2)}px`;
+                        el.style.top = `${Math.max(5, point.clientY - bankRect.top - el.offsetHeight / 2)}px`;
+                        bank.appendChild(el);
+                        wordObj.x = parseFloat(el.style.left) || 5;
+                        wordObj.y = parseFloat(el.style.top) || 5;
+                    } else {
+                        returnWordToBank(wordObj);
+                    }
+                }
+                draggedWordObj = null;
+                updateRemainingWordBadge();
+            };
+
+            el.addEventListener('mousedown', onStart);
+            el.addEventListener('touchstart', onStart, { passive: false });
+        }
+
+        function updateRemainingWordBadge() {
+            const badge = document.getElementById('word-count-badge');
+            if (!badge) return;
+            const remaining = floatingWords.filter(word => !word.isPlaced).length;
+            badge.innerText = `${remaining} Kata Tersisa`;
+        }
+
+        function updateScoreDisplay() {
+            const scoreDisplay = document.getElementById('score-display');
+            if (scoreDisplay) scoreDisplay.innerText = Object.values(levelBestScores).reduce((sum, score) => sum + score, 0);
+        }
+
+        // Evaluation & Score
+        function checkAnswers(timedOut = false) {
+            // Pemeriksaan manual menghentikan timer; timeout sudah dihentikan oleh timer.
+            stopGameTimer();
+            const currentWords = gameData[currentLevel] || [];
+            let totalWords = currentWords.length;
+            let correctCount = 0;
+
+            currentWords.forEach(item => {
+                const wordEl = document.getElementById(item.id);
+                if (wordEl) {
+                    const parentZone = wordEl.closest('.drop-zone');
+                    if (parentZone) {
+                        const userCat = parentZone.getAttribute('data-category');
+                        if (userCat === item.category) {
+                            correctCount++;
+                            wordEl.classList.remove('border-slate-200', 'border-rose-300');
+                            wordEl.classList.add('border-2', 'border-emerald-500', 'bg-emerald-50');
+                        } else {
+                            wordEl.classList.remove('border-slate-200', 'border-emerald-500');
+                            wordEl.classList.add('border-2', 'border-rose-400', 'bg-rose-50');
+                        }
+                    }
+                }
+            });
+
+            // Skor menyimpan hasil terbaik dari tiap level agar tidak bertambah berulang saat tombol ditekan lagi.
+            levelBestScores[currentLevel] = Math.max(levelBestScores[currentLevel] || 0, correctCount);
+            updateScoreDisplay();
+
+            // Tampilkan hasil evaluasi.
+            document.getElementById('scoreText').innerText = `${correctCount} / ${totalWords}`;
+            document.getElementById('resultSubtitle').innerText = `${levelTitles[currentLevel]} Selesai`;
+            const modalNextBtn = document.getElementById('modalNextBtn');
+            modalNextBtn.classList.add('hidden');
+            document.getElementById('nextLevelBtn').classList.add('hidden');
+            document.getElementById('nextLevelBtn').classList.remove('flex');
+
+            if (totalWords > 0 && correctCount === totalWords) {
+                document.getElementById('feedbackText').innerText = "Luar biasa! Semua kriteria berhasil dikelompokkan dengan tepat!";
+                document.getElementById('nextLevelBtn').classList.remove('hidden');
+                document.getElementById('nextLevelBtn').classList.add('flex');
+                modalNextBtn.classList.remove('hidden');
+            } else if (correctCount > totalWords / 2) {
+                document.getElementById('feedbackText').innerText = "Bagus sekali! Masih ada beberapa kata yang perlu dipindahkan.";
+            } else {
+                document.getElementById('feedbackText').innerText = "Tetap semangat! Coba periksa kembali pasangan kata dan kategorinya.";
+            }
+
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        function resetCurrentLevel() {
+            levelBestScores[currentLevel] = 0;
+            updateScoreDisplay();
+            initLevel(currentLevel);
+        }
+
+        function nextLevel() {
+            if (currentLevel < 3) {
+                switchLevel(currentLevel + 1);
+            } else {
+                alert("Selamat! Anda telah menyelesaikan seluruh 3 Level permainan Kotak Gaya Belajarmu!");
+            }
+        }
+
+        // Teacher Editor Mode Modal Logic
+        function openTeacherModal() {
+            document.getElementById('teacherModal').classList.remove('hidden');
+            renderTeacherWordsList();
+        }
+
+        function closeTeacherModal() {
+            document.getElementById('teacherModal').classList.add('hidden');
+            // Re-init current game level with updated words
+            initLevel(currentLevel);
+        }
+
+        function renderTeacherWordsList() {
+            const lvlSelect = document.getElementById('editorLevelSelect').value;
+            const wordsList = gameData[lvlSelect] || [];
+            const listContainer = document.getElementById('teacherWordsList');
+            listContainer.innerHTML = '';
+
+            wordsList.forEach(w => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-slate-50 p-2 px-3 rounded-xl border border-slate-200 text-xs";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-800">${w.text}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${getCatBadgeColor(w.category)}">${w.category}</span>
+                    </div>
+                    <button onclick="deleteWordByTeacher('${lvlSelect}', '${w.id}')" class="text-rose-500 hover:text-rose-700 p-1">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function getCatBadgeColor(cat) {
+            if (cat === 'visual') return 'bg-blue-100 text-blue-700';
+            if (cat === 'auditori') return 'bg-emerald-100 text-emerald-700';
+            return 'bg-amber-100 text-amber-700';
+        }
+
+        function addWordByTeacher() {
+            const lvl = document.getElementById('editorLevelSelect').value;
+            const textInput = document.getElementById('newWordText');
+            const catSelect = document.getElementById('newWordCategory');
+
+            if (!textInput.value.trim()) return;
+
+            const newObj = {
+                id: `custom_${Date.now()}`,
+                text: textInput.value.trim(),
+                category: catSelect.value
+            };
+
+            gameData[lvl].push(newObj);
+            localStorage.setItem('kotakGayaBelajarData', JSON.stringify(gameData));
+            
+            textInput.value = '';
+            renderTeacherWordsList();
+        }
+
+        function deleteWordByTeacher(lvl, id) {
+            gameData[lvl] = gameData[lvl].filter(w => w.id !== id);
+            localStorage.setItem('kotakGayaBelajarData', JSON.stringify(gameData));
+            renderTeacherWordsList();
+        }
+
+        function resetDefaultData() {
+            if (confirm("Reset seluruh kata ke setelan default?")) {
+                gameData = JSON.parse(JSON.stringify(defaultLevelData));
+                localStorage.removeItem('kotakGayaBelajarData');
+                renderTeacherWordsList();
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            // Keep default cover visible on launch
+        };
+    </script>
+</body>
+</html>
